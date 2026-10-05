@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="pt-br" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Produtos</title>
+    <link rel="stylesheet" th:href="@{/css/home.css}">
+    <link rel="stylesheet" th:href="@{/css/usuarios.css}">
+    <link rel="stylesheet" th:href="@{/css/produtos.css}">
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="navbar-container">
+        <a class="navbar-brand" th:href="@{/home}">Template</a>
+        <ul class="navbar-menu">
+            <li><a class="nav-link" th:href="@{/home}">Home</a></li>
+            <li><a class="nav-link active" th:href="@{/produtos}">Produtos</a></li>
+            <li><a class="nav-link" th:href="@{/usuarios}">Usuários</a></li>
+            <li><a class="nav-link" th:href="@{/categorias}">Categorias</a></li>
+            <li><a class="nav-link" th:href="@{/estoque}">Estoque</a></li>
+            <li><a class="nav-link" th:href="@{/movimentacoes}">Movimentações</a></li>
+            <li><a class="nav-link" th:href="@{/logout}">Sair</a></li>
+        </ul>
+    </div>
+</nav>
+
+<main class="pagina-usuarios">
+    <header class="cabecalho-pagina">
+        <h1>Gerenciamento de produtos</h1>
+        <div class="linha"></div>
+        <p>Cadastre, edite e consulte os produtos do sistema.</p>
+    </header>
+
+    <div class="mensagem sucesso" th:if="${mensagemProduto}" th:text="${mensagemProduto}"></div>
+    <div class="mensagem erro" th:if="${erroProduto}" th:text="${erroProduto}"></div>
+
+    <section class="card-usuarios card-formulario" th:if="${isAdmin}">
+        <div class="card-cabecalho">
+            <div>
+                <h2 th:text="${produtoForm.id == null ? 'Novo produto' : 'Editar produto'}">Novo produto</h2>
+                <p th:text="${produtoForm.id == null ? 'Preencha os dados abaixo para cadastrar um novo produto.' : 'Altere os dados necessários e salve as informações.'}">
+                    Preencha os dados abaixo para cadastrar um novo produto.
+                </p>
+            </div>
+        </div>
+
+        <form th:action="@{/produtos/salvar}" method="post">
+            <input type="hidden" name="id" th:value="${produtoForm.id}">
+
+            <div class="form-grid produto-grid">
+                <div class="campo campo-maior">
+                    <label for="nome">Nome</label>
+                    <input id="nome" name="nome" type="text" th:value="${produtoForm.nome}" placeholder="Nome do produto" required>
+                </div>
+
+                <div class="campo">
+                    <label for="preco">Preço</label>
+                    <input id="preco" name="preco" type="number" min="0" step="0.01" th:value="${produtoForm.preco}" placeholder="0,00" required>
+                </div>
+
+                <div class="campo">
+                    <label for="estoque">Estoque</label>
+                    <input id="estoque" name="estoque" type="number" min="0" th:value="${produtoForm.estoque}" placeholder="0" required>
+                </div>
+
+                <div class="campo">
+                    <label for="categoriaId">Categoria</label>
+                    <select id="categoriaId" name="categoriaId">
+                        <option value="">Sem categoria</option>
+                        <option th:each="categoria : ${categorias}"
+                                th:value="${categoria.id}"
+                                th:text="${categoria.nome}"
+                                th:selected="${produtoForm.categoriaId == categoria.id}">
+                        </option>
+                    </select>
+                </div>
+
+                <div class="campo">
+                    <label for="ativo">Status</label>
+                    <select id="ativo" name="ativo">
+                        <option value="true" th:selected="${produtoForm.ativo == null || produtoForm.ativo}">Ativo</option>
+                        <option value="false" th:selected="${produtoForm.ativo != null && !produtoForm.ativo}">Inativo</option>
+                    </select>
+                </div>
+
+                <div class="campo campo-descricao">
+                    <label for="descricao">Descrição</label>
+                    <textarea id="descricao" name="descricao" rows="3" th:text="${produtoForm.descricao}" placeholder="Descrição do produto"></textarea>
+                </div>
+
+                <div class="form-acoes campo-acoes-produto">
+                    <button class="btn btn-primary" type="submit">Salvar produto</button>
+                    <a class="btn btn-secondary" th:if="${produtoForm.id != null}" th:href="@{/produtos}">Cancelar</a>
+                </div>
+            </div>
+        </form>
+    </section>
+
+    <section class="card-usuarios aviso-sem-permissao" th:unless="${isAdmin}">
+        <strong>Modo consulta</strong>
+        <p>Somente usuários administradores podem cadastrar, editar ou excluir produtos.</p>
+    </section>
+
+    <section class="card-usuarios card-lista">
+        <div class="card-cabecalho card-cabecalho-lista">
+            <div>
+                <h2>Produtos cadastrados</h2>
+                <p>Consulte os produtos disponíveis no sistema.</p>
+            </div>
+            <span class="contador-usuarios" th:text="${#lists.size(produtos)} + ' produto(s)'">0 produto(s)</span>
+        </div>
+
+        <div class="tabela-container">
+            <table class="tabela-usuarios tabela-produtos">
+                <thead>
+                <tr>
+                    <th class="coluna-id">ID</th>
+                    <th>Produto</th>
+                    <th>Preço</th>
+                    <th>Estoque</th>
+                    <th>Categoria</th>
+                    <th>Status</th>
+                    <th class="coluna-acoes" th:if="${isAdmin}">Ações</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="produto : ${produtos}">
+                    <td class="coluna-id" th:text="${produto.id}"></td>
+                    <td>
+                        <strong th:text="${produto.nome}"></strong>
+                        <small class="descricao-produto" th:if="${produto.descricao != null && !produto.descricao.isBlank()}" th:text="${produto.descricao}"></small>
+                    </td>
+                    <td th:text="${'R$ ' + #numbers.formatDecimal(produto.preco, 1, 2)}"></td>
+                    <td th:text="${produto.estoque}"></td>
+                    <td th:text="${produto.categoriaNome != null ? produto.categoriaNome : '-'}"></td>
+                    <td><span class="status-produto" th:classappend="${produto.ativo ? ' status-ativo' : ' status-inativo'}" th:text="${produto.ativo ? 'Ativo' : 'Inativo'}"></span></td>
+                    <td th:if="${isAdmin}">
+                        <div class="acoes-tabela">
+                            <a class="btn btn-secondary" th:href="@{/produtos(editar=${produto.id})}">Editar</a>
+                            <button class="btn btn-danger excluir-produto" type="button" th:attr="data-id=${produto.id}">Excluir</button>
+                        </div>
+                    </td>
+                </tr>
+                <tr class="linha-vazia" th:if="${#lists.isEmpty(produtos)}">
+                    <td th:colspan="${isAdmin ? 7 : 6}">Nenhum produto cadastrado.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+
+<script th:src="@{/excluir_produto.js}"></script>
+</body>
+</html>
